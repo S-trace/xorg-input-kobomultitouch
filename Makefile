@@ -2,13 +2,13 @@ VERSION = 1
 PATCHLEVEL = 0
 EXTRAVERSION = rc3
 
-LIBRARY	= multitouch.so
+LIBRARY	= kobomultitouch_drv.so
 MODULES = src
 XMODULES = driver
 
 o_src	= capabilities hwstate mtstate memory mtouch gestures
 
-o_driver= multitouch
+o_driver= kobomultitouch_drv
 
 TARGETS	+= src/test
 
@@ -57,7 +57,7 @@ clean:
 	rm -rf bin obj
 
 distclean: clean
-	rm -rf debian/*.log debian/files debian/xf86-input-multitouch*
+	rm -rf debian/*.log debian/files debian/xf86-input-kobomultitouch*
 
 install: $(TLIB)
 	install -d "$(DESTDIR)/$(DLIB)"

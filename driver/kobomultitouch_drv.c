@@ -100,11 +100,11 @@ static int device_init(DeviceIntPtr dev, LocalDevicePtr local)
 
 	local->fd = xf86OpenSerial(local->options);
 	if (local->fd < 0) {
-		xf86Msg(X_ERROR, "multitouch: cannot open device\n");
+		xf86Msg(X_ERROR, "kobomultitouch: cannot open device\n");
 		return !Success;
 	}
 	if (configure_mtouch(mt, local->fd)) {
-		xf86Msg(X_ERROR, "multitouch: cannot configure device\n");
+		xf86Msg(X_ERROR, "kobomultitouch: cannot configure device\n");
 		return !Success;
 	}
 	xf86CloseSerial(local->fd);
@@ -167,11 +167,11 @@ static int device_on(LocalDevicePtr local)
 	struct MTouch *mt = local->private;
 	local->fd = xf86OpenSerial(local->options);
 	if (local->fd < 0) {
-		xf86Msg(X_ERROR, "multitouch: cannot open device\n");
+		xf86Msg(X_ERROR, "kobomultitouch: cannot open device\n");
 		return !Success;
 	}
 	if (open_mtouch(mt, local->fd)) {
-		xf86Msg(X_ERROR, "multitouch: cannot grab device\n");
+		xf86Msg(X_ERROR, "kobomultitouch: cannot grab device\n");
 		return !Success;
 	}
 	xf86AddEnabledDevice(local);
@@ -183,7 +183,7 @@ static int device_off(LocalDevicePtr local)
 	struct MTouch *mt = local->private;
 	xf86RemoveEnabledDevice(local);
 	if (close_mtouch(mt, local->fd))
-		xf86Msg(X_WARNING, "multitouch: cannot ungrab device\n");
+		xf86Msg(X_WARNING, "kobomultitouch: cannot ungrab device\n");
 	xf86CloseSerial(local->fd);
 	return Success;
 }
@@ -366,7 +366,7 @@ static void uninit(InputDriverPtr drv, InputInfoPtr local, int flags)
 
 static InputDriverRec MULTITOUCH = {
 	1,
-	"multitouch",
+	"kobomultitouch",
 	NULL,
 	preinit,
 	uninit,
@@ -375,7 +375,7 @@ static InputDriverRec MULTITOUCH = {
 };
 
 static XF86ModuleVersionInfo VERSION = {
-	"multitouch",
+	"kobomultitouch",
 	MODULEVENDORSTRING,
 	MODINFOSTRING1,
 	MODINFOSTRING2,
@@ -393,4 +393,4 @@ static pointer setup(pointer module, pointer options, int *errmaj, int *errmin)
 	return module;
 }
 
-XF86ModuleData multitouchModuleData = {&VERSION, &setup, NULL };
+XF86ModuleData kobomultitouchModuleData = {&VERSION, &setup, NULL };
