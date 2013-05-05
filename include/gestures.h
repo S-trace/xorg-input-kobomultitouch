@@ -38,7 +38,7 @@
 
 struct Gestures {
 	bitmask_t type, btmask, btdata;
-	int same_fingers, dx, dy, scale, rot;
+	int same_fingers, posx, posy, dx, dy, scale, rot;
 	bitmask_t tapmask;
 	int ntap;
 };

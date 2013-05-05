@@ -193,24 +193,25 @@ static int device_close(LocalDevicePtr local)
 	return Success;
 }
 
-static void tickle_button(LocalDevicePtr local, int id)
+static void tickle_button(LocalDevicePtr local, int id, int posx, int posy)
 {
-	xf86PostButtonEvent(local->dev, FALSE, id, 1, 0, 0);
-	xf86PostButtonEvent(local->dev, FALSE, id, 0, 0, 0);
+	xf86PostMotionEvent(local->dev, 1, 0, 2, posx, posy);
+	xf86PostButtonEvent(local->dev, 1, id, 1, 0, 0);
+	xf86PostButtonEvent(local->dev, 1, id, 0, 0, 0);
 }
 
 static void button_scroll(LocalDevicePtr local,
 			  int btdec, int btinc,
 			  int *scroll, int step,
-			  int delta)
+			  int delta, int posx, int posy)
 {
 	*scroll += delta;
 	while (*scroll > step) {
-		tickle_button(local, btinc);
+		tickle_button(local, btinc, posx, posy);
 		*scroll -= step;
 	}
 	while (*scroll < -step) {
-		tickle_button(local, btdec);
+		tickle_button(local, btdec, posx, posy);
 		*scroll += step;
 	}
 }
@@ -227,47 +228,49 @@ static void handle_gestures(LocalDevicePtr local,
 		vswipe = 0;
 		hswipe = 0;
 	}
-	foreach_bit(i, gs->btmask)
-		xf86PostButtonEvent(local->dev, FALSE,
+	foreach_bit(i, gs->btmask) {
+		xf86PostMotionEvent(local->dev, 1, 0, 2, gs->posx, gs->posy);
+		xf86PostButtonEvent(local->dev, 1,
 				    i + 1, GETBIT(gs->btdata, i), 0, 0);
-	if (GETBIT(gs->type, GS_MOVE))
-		xf86PostMotionEvent(local->dev, 0, 0, 2, gs->dx, gs->dy);
-
+	}
+	if (GETBIT(gs->type, GS_MOVE)) {
+		xf86PostMotionEvent(local->dev, 1, 0, 2, gs->posx, gs->posy);
+	}
 	if (GETBIT(gs->type, GS_VSCROLL)) {
 		int step = 1 + vscroll_fraction * get_cap_ysize(caps);
-		button_scroll(local, 4, 5, &vscroll, step, gs->dy);
+		button_scroll(local, 4, 5, &vscroll, step, gs->dy, gs->posx, gs->posy);
 	}
 	if (GETBIT(gs->type, GS_HSCROLL)) {
 		int step = 1 + hscroll_fraction * get_cap_xsize(caps);
-		button_scroll(local, 6, 7, &hscroll, step, gs->dx);
+		button_scroll(local, 6, 7, &hscroll, step, gs->dx, gs->posx, gs->posy);
 	}
 	if (GETBIT(gs->type, GS_VSWIPE)) {
 		int step = 1 + vswipe_fraction * get_cap_ysize(caps);
-		button_scroll(local, 8, 9, &vswipe, step, gs->dy);
+		button_scroll(local, 8, 9, &vswipe, step, gs->dy, gs->posx, gs->posy);
 	}
 	if (GETBIT(gs->type, GS_HSWIPE)) {
 		int step = 1 + hswipe_fraction * get_cap_xsize(caps);
-		button_scroll(local, 10, 11, &hswipe, step, gs->dx);
+		button_scroll(local, 10, 11, &hswipe, step, gs->dx, gs->posx, gs->posy);
 	}
 	if (GETBIT(gs->type, GS_SCALE)) {
 		int step = 1 + scale_fraction * get_cap_xsize(caps);
-		button_scroll(local, 12, 13, &scale, step, gs->scale);
+		button_scroll(local, 12, 13, &scale, step, gs->scale, gs->posx, gs->posy);
 	}
 	if (GETBIT(gs->type, GS_ROTATE)) {
 		int step = 1 + rot_fraction * get_cap_xsize(caps);
-		button_scroll(local, 14, 15, &rot, step, gs->rot);
+		button_scroll(local, 14, 15, &rot, step, gs->rot, gs->posx, gs->posy);
 	}
 	if (GETBIT(gs->type, GS_TAP) && gs->ntap == 1) {
 		foreach_bit(i, gs->tapmask)
-			tickle_button(local, i + 1);
+			tickle_button(local, i + 1, gs->posx, gs->posy);
 	}
 	if (GETBIT(gs->type, GS_VSWIPE4)) {
 		int step = 1 + vswipe_fraction * get_cap_ysize(caps);
-		button_scroll(local, 16, 17, &vswipe, step, gs->dy);
+		button_scroll(local, 16, 17, &vswipe, step, gs->dy, gs->posx, gs->posy);
 	}
 	if (GETBIT(gs->type, GS_HSWIPE4)) {
 		int step = 1 + hswipe_fraction * get_cap_xsize(caps);
-		button_scroll(local, 18, 19, &hswipe, step, gs->dx);
+		button_scroll(local, 18, 19, &hswipe, step, gs->dx, gs->posx, gs->posy);
 	}
 }
 
@@ -319,7 +322,7 @@ static int preinit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 		return BadAlloc;
 
 	pInfo->private = mt;
-	pInfo->type_name = XI_TOUCHPAD;
+	pInfo->type_name = XI_TOUCHSCREEN;
 	pInfo->device_control = device_control;
 	pInfo->read_input = read_input;
 	pInfo->switch_mode = 0;
@@ -340,7 +343,7 @@ static InputInfoPtr preinit(InputDriverPtr drv, IDevPtr dev, int flags)
 		goto error;
 
 	local->name = dev->identifier;
-	local->type_name = XI_TOUCHPAD;
+	local->type_name = XI_TOUCHSCREEN;
 	local->device_control = device_control;
 	local->read_input = read_input;
 	local->private = mt;

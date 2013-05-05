@@ -82,7 +82,6 @@ static void extract_movement(struct Gestures *gs, struct MTouch* mt)
 	float move, xmove = 0, ymove = 0;
 	float rad, rad2 = 0, scale = 0, rot = 0;
 
-
 	if (!nmove || nmove != npoint)
 		return;
 
@@ -182,9 +181,15 @@ static void extract_movement(struct Gestures *gs, struct MTouch* mt)
 void extract_gestures(struct Gestures *gs, struct MTouch* mt)
 {
 	memset(gs, 0, sizeof(struct Gestures));
+
+	gs->posx = mt->state.finger[0].position_x;
+	gs->posy = mt->state.finger[0].position_y;
+
 	gs->same_fingers = mt->mem.same;
+
 	extract_buttons(gs, mt);
 	extract_movement(gs, mt);
+
 	mt->prev_state = mt->state;
 }
 
@@ -200,6 +205,9 @@ void extract_delayed_gestures(struct Gestures *gs, struct MTouch* mt)
 {
 	memset(gs, 0, sizeof(struct Gestures));
 	mt->mem.wait = 0;
+
+	gs->posx = mt->state.finger[0].position_x;
+	gs->posy = mt->state.finger[0].position_y;
 
 	if (mt->mem.tpdown < mt->mem.tpup) {
 		switch (mt->mem.maxtap) {
@@ -227,8 +235,10 @@ void output_gesture(const struct Gestures *gs)
 	foreach_bit(i, gs->btmask)
 		xf86Msg(X_INFO, "button bit: %d %d\n",
 			i, GETBIT(gs->btdata, i));
-	if (GETBIT(gs->type, GS_MOVE))
+	if (GETBIT(gs->type, GS_MOVE)) {
+		xf86Msg(X_INFO, "position: %d %d\n", gs->posx, gs->posy);
 		xf86Msg(X_INFO, "motion: %d %d\n", gs->dx, gs->dy);
+	}
 	if (GETBIT(gs->type, GS_VSCROLL))
 		xf86Msg(X_INFO, "vscroll: %d\n", gs->dy);
 	if (GETBIT(gs->type, GS_HSCROLL))
