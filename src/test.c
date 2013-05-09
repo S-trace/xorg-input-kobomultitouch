@@ -36,12 +36,16 @@ static void loop_device(int fd)
 		return;
 	}
 	while (!mtdev_idle(&mt.dev, fd, 5000)) {
+		//while (read_packet(&mt, fd) > 0) {
+		//	extract_gestures(&gs, &mt);
+		//	output_gesture(&gs);
+		//}
+		//if (has_delayed_gestures(&mt, fd)) {
+		//	extract_delayed_gestures(&gs, &mt);
+		//	output_gesture(&gs);
+		//}
 		while (read_packet(&mt, fd) > 0) {
-			extract_gestures(&gs, &mt);
-			output_gesture(&gs);
-		}
-		if (has_delayed_gestures(&mt, fd)) {
-			extract_delayed_gestures(&gs, &mt);
+			extract_mouse_gestures(&gs, &mt);
 			output_gesture(&gs);
 		}
 	}

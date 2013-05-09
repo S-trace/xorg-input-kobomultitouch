@@ -44,6 +44,7 @@ struct Gestures {
 };
 
 void extract_gestures(struct Gestures *gs, struct MTouch* mt);
+void extract_mouse_gestures(struct Gestures *gs, struct MTouch* mt);
 void extract_delayed_gestures(struct Gestures *gs, struct MTouch* mt);
 void output_gesture(const struct Gestures *gs);
 

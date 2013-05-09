@@ -29,6 +29,51 @@ static const int FINGER_THUMB_MS = 600;
 static const int BUTTON_HOLD_MS = 200;
 
 /**
+ *
+ * Extract mouse gestures.
+ *
+ */
+void extract_mouse(struct Gestures *gs, struct MTouch* mt)
+{
+	int nmove = bitcount(mt->mem.moving);
+
+	if (GETBIT(mt->mem.added, 0)) {
+		// pressed first finger
+		
+		// lmb pressed
+		gs->posx = mt->state.finger[0].position_x;
+		gs->posy = mt->state.finger[0].position_y;
+		SETBIT(gs->btmask, MT_BUTTON_LEFT);
+		SETBIT(gs->btdata, MT_BUTTON_LEFT);
+		mt->mem.btdata = BITMASK(MT_BUTTON_LEFT);
+
+		return;
+	}
+
+	if (GETBIT(mt->mem.btdata, MT_BUTTON_LEFT) && !GETBIT(mt->mem.fingers, 0)) {
+		// released first finger
+
+		// lmb released
+		gs->posx = mt->state.finger[0].position_x;
+		gs->posy = mt->state.finger[0].position_y;
+		SETBIT(gs->btmask, MT_BUTTON_LEFT);
+		CLEARBIT(gs->btdata, MT_BUTTON_LEFT);
+		mt->mem.btdata = 0;
+
+		return;
+	}
+
+	if (GETBIT(mt->mem.btdata, MT_BUTTON_LEFT)) {
+		if (nmove == 1) {
+			// mouse move
+			gs->posx = mt->state.finger[0].position_x;
+			gs->posy = mt->state.finger[0].position_y;
+			SETBIT(gs->type, GS_MOVE);
+		}
+	}
+}
+
+/**
  * extract_buttons
  *
  * Set the button gesture.
@@ -171,6 +216,25 @@ static void extract_movement(struct Gestures *gs, struct MTouch* mt)
 }
 
 /**
+ * extract_mouse_gestures
+ *
+ * Extract the mouse gestures.
+ *
+ * Reset memory after use.
+ *
+ */
+void extract_mouse_gestures(struct Gestures *gs, struct MTouch* mt)
+{
+	memset(gs, 0, sizeof(struct Gestures));
+
+	gs->same_fingers = mt->mem.same;
+
+	extract_mouse(gs, mt);
+
+	mt->prev_state = mt->state;
+}
+
+/**
  * extract_gestures
  *
  * Extract the gestures.
@@ -233,11 +297,10 @@ void output_gesture(const struct Gestures *gs)
 {
 	int i;
 	foreach_bit(i, gs->btmask)
-		xf86Msg(X_INFO, "button bit: %d %d\n",
-			i, GETBIT(gs->btdata, i));
+		xf86Msg(X_INFO, "button bit: %d %d (pos: %d %d)\n",
+			i, GETBIT(gs->btdata, i), gs->posx, gs->posy);
 	if (GETBIT(gs->type, GS_MOVE)) {
-		xf86Msg(X_INFO, "position: %d %d\n", gs->posx, gs->posy);
-		xf86Msg(X_INFO, "motion: %d %d\n", gs->dx, gs->dy);
+		xf86Msg(X_INFO, "position: %d %d (motion: %d %d)\n", gs->posx, gs->posy, gs->dx, gs->dy);
 	}
 	if (GETBIT(gs->type, GS_VSCROLL))
 		xf86Msg(X_INFO, "vscroll: %d\n", gs->dy);
@@ -253,4 +316,5 @@ void output_gesture(const struct Gestures *gs)
 		xf86Msg(X_INFO, "rotate: %d\n", gs->rot);
 	foreach_bit(i, gs->tapmask)
 		xf86Msg(X_INFO, "tap: %d %d\n", i, gs->ntap);
+	xf86Msg(X_INFO, "+");
 }

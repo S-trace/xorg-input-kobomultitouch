@@ -279,12 +279,17 @@ static void read_input(LocalDevicePtr local)
 {
 	struct Gestures gs;
 	struct MTouch *mt = local->private;
+
+	//while (read_packet(mt, local->fd) > 0) {
+	//	extract_gestures(&gs, mt);
+	//	handle_gestures(local, &gs, &mt->caps);
+	//}
+	//if (has_delayed_gestures(mt, local->fd)) {
+	//	extract_delayed_gestures(&gs, mt);
+	//	handle_gestures(local, &gs, &mt->caps);
+	//}
 	while (read_packet(mt, local->fd) > 0) {
-		extract_gestures(&gs, mt);
-		handle_gestures(local, &gs, &mt->caps);
-	}
-	if (has_delayed_gestures(mt, local->fd)) {
-		extract_delayed_gestures(&gs, mt);
+		extract_mouse_gestures(&gs, mt);
 		handle_gestures(local, &gs, &mt->caps);
 	}
 }
