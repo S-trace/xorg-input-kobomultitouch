@@ -103,25 +103,12 @@ const struct FingerState *find_finger(const struct MTState *s, int id)
 void output_mtstate(const struct MTState *s)
 {
 	int i;
-	xf86Msg(X_INFO, "buttons: %d%d%d\n",
-		GETBIT(s->button, MT_BUTTON_LEFT),
-		GETBIT(s->button, MT_BUTTON_MIDDLE),
-		GETBIT(s->button, MT_BUTTON_RIGHT));
-	xf86Msg(X_INFO, "fingers: %d\n",
-		s->nfinger);
-	xf86Msg(X_INFO, "evtime: %lld\n",
-		s->evtime);
+	xf86Msg(X_INFO, "-- fingers: %d, time: %lld\n",
+		s->nfinger, s->evtime);
 	for (i = 0; i < s->nfinger; i++) {
 		xf86Msg(X_INFO,
-			"  %+02d %+05d:%+05d +%05d:%+05d "
-			"%+06d %+06d %+05d:%+05d\n",
+			"   id: %+02d x: %+05d y: %+05d\n",
 			s->finger[i].tracking_id,
-			s->finger[i].touch_major,
-			s->finger[i].touch_minor,
-			s->finger[i].width_major,
-			s->finger[i].width_minor,
-			s->finger[i].orientation,
-			s->finger[i].pressure,
 			s->finger[i].position_x,
 			s->finger[i].position_y);
 	}

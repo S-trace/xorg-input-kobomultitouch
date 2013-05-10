@@ -229,9 +229,12 @@ static void handle_gestures(LocalDevicePtr local,
 		hswipe = 0;
 	}
 	foreach_bit(i, gs->btmask) {
-		xf86PostMotionEvent(local->dev, 1, 0, 2, gs->posx, gs->posy);
-		xf86PostButtonEvent(local->dev, 1,
-				    i + 1, GETBIT(gs->btdata, i), 0, 0);
+		if (GETBIT(gs->btdata, i)) {
+			xf86PostMotionEvent(local->dev, 1, 0, 2, gs->posx, gs->posy);
+			xf86PostButtonEvent(local->dev, 1, i + 1, 1, 0, 0);
+		} else {
+			xf86PostButtonEvent(local->dev, 1, i + 1, 0, 0, 0);
+		}
 	}
 	if (GETBIT(gs->type, GS_MOVE)) {
 		xf86PostMotionEvent(local->dev, 1, 0, 2, gs->posx, gs->posy);

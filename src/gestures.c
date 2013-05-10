@@ -35,12 +35,13 @@ static const int BUTTON_HOLD_MS = 200;
  */
 void extract_mouse(struct Gestures *gs, struct MTouch* mt)
 {
-	int nmove = bitcount(mt->mem.moving);
+	static int tracking_id = -1;
 
-	if (GETBIT(mt->mem.added, 0)) {
-		// pressed first finger
-		
+	if (mt->prev_state.nfinger == 0 && mt->state.nfinger == 1) {
+		// pressed exactly one finger
+
 		// lmb pressed
+		tracking_id = mt->state.finger[0].tracking_id;
 		gs->posx = mt->state.finger[0].position_x;
 		gs->posy = mt->state.finger[0].position_y;
 		SETBIT(gs->btmask, MT_BUTTON_LEFT);
@@ -50,24 +51,24 @@ void extract_mouse(struct Gestures *gs, struct MTouch* mt)
 		return;
 	}
 
-	if (GETBIT(mt->mem.btdata, MT_BUTTON_LEFT) && !GETBIT(mt->mem.fingers, 0)) {
-		// released first finger
-
-		// lmb released
-		gs->posx = mt->state.finger[0].position_x;
-		gs->posy = mt->state.finger[0].position_y;
-		SETBIT(gs->btmask, MT_BUTTON_LEFT);
-		CLEARBIT(gs->btdata, MT_BUTTON_LEFT);
-		mt->mem.btdata = 0;
-
-		return;
-	}
-
 	if (GETBIT(mt->mem.btdata, MT_BUTTON_LEFT)) {
-		if (nmove == 1) {
+		// lmb is pressed
+
+		const struct FingerState *finger_state = find_finger(&mt->state, tracking_id);
+
+		if (finger_state == NULL) {
+			// released first finger
+
+			// lmb released
+			tracking_id = -1;
+			SETBIT(gs->btmask, MT_BUTTON_LEFT);
+			CLEARBIT(gs->btdata, MT_BUTTON_LEFT);
+			mt->mem.btdata = 0;
+		}
+		else {
 			// mouse move
-			gs->posx = mt->state.finger[0].position_x;
-			gs->posy = mt->state.finger[0].position_y;
+			gs->posx = finger_state->position_x;
+			gs->posy = finger_state->position_y;
 			SETBIT(gs->type, GS_MOVE);
 		}
 	}
@@ -316,5 +317,5 @@ void output_gesture(const struct Gestures *gs)
 		xf86Msg(X_INFO, "rotate: %d\n", gs->rot);
 	foreach_bit(i, gs->tapmask)
 		xf86Msg(X_INFO, "tap: %d %d\n", i, gs->ntap);
-	xf86Msg(X_INFO, "+");
+	xf86Msg(X_INFO, "\n");
 }
