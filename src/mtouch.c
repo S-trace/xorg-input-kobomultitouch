@@ -20,6 +20,8 @@
  **************************************************************************/
 
 #include "mtouch.h"
+#include "variance_filter.h"
+#include "jitter_filter.h"
 
 static const int use_grab = 0;
 
@@ -44,6 +46,7 @@ int open_mtouch(struct MTouch *mt, int fd)
 	init_mtstate(&mt->state);
 	init_memory(&mt->mem);
 
+	// we have better filters than included in mtdev
 	mtdev_set_abs_fuzz(&mt->dev, ABS_MT_POSITION_X, 0);
 	mtdev_set_abs_fuzz(&mt->dev, ABS_MT_POSITION_Y, 0);
 
@@ -78,6 +81,15 @@ int read_packet(struct MTouch *mt, int fd)
 	if (ret <= 0)
 		return ret;
 	extract_mtstate(&mt->state, &mt->hs, &mt->caps);
+
+	// apply filters
+	ret = variance_filter(&mt->state);
+	if (ret <= 0)
+		return ret;
+	ret = jitter_filter(&mt->state);
+	if (ret <= 0)
+		return ret;
+
 //#if 0
 	output_mtstate(&mt->state);
 //#endif

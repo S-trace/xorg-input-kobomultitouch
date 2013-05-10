@@ -6,7 +6,7 @@ LIBRARY	= kobomultitouch_drv.so
 MODULES = src
 XMODULES = driver
 
-o_src	= capabilities hwstate mtstate memory mtouch gestures
+o_src	= capabilities hwstate mtstate memory mtouch gestures variance_filter jitter_filter
 
 o_driver= kobomultitouch_drv
 
