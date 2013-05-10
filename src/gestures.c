@@ -37,21 +37,20 @@ void extract_mouse(struct Gestures *gs, struct MTouch* mt)
 {
 	static int tracking_id = -1;
 
-	if (mt->prev_state.nfinger == 0 && mt->state.nfinger == 1) {
-		// pressed exactly one finger
+	if (tracking_id == -1) {
+		// looking for lmb down
 
-		// lmb pressed
-		tracking_id = mt->state.finger[0].tracking_id;
-		gs->posx = mt->state.finger[0].position_x;
-		gs->posy = mt->state.finger[0].position_y;
-		SETBIT(gs->btmask, MT_BUTTON_LEFT);
-		SETBIT(gs->btdata, MT_BUTTON_LEFT);
-		mt->mem.btdata = BITMASK(MT_BUTTON_LEFT);
+		if (mt->state.nfinger == 1) {
+			// lmb pressed
 
-		return;
-	}
-
-	if (GETBIT(mt->mem.btdata, MT_BUTTON_LEFT)) {
+			tracking_id = mt->state.finger[0].tracking_id;
+			gs->posx = mt->state.finger[0].position_x;
+			gs->posy = mt->state.finger[0].position_y;
+			SETBIT(gs->btmask, MT_BUTTON_LEFT);
+			SETBIT(gs->btdata, MT_BUTTON_LEFT);
+			mt->mem.btdata = BITMASK(MT_BUTTON_LEFT);
+		}
+	} else {
 		// lmb is pressed
 
 		const struct FingerState *finger_state = find_finger(&mt->state, tracking_id);

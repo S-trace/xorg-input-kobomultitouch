@@ -43,6 +43,10 @@ int open_mtouch(struct MTouch *mt, int fd)
 	init_mtstate(&mt->prev_state);
 	init_mtstate(&mt->state);
 	init_memory(&mt->mem);
+
+	mtdev_set_abs_fuzz(&mt->dev, ABS_MT_POSITION_X, 0);
+	mtdev_set_abs_fuzz(&mt->dev, ABS_MT_POSITION_Y, 0);
+
 	if (use_grab) {
 		SYSCALL(ret = ioctl(fd, EVIOCGRAB, 1));
 		if (ret)
@@ -74,9 +78,9 @@ int read_packet(struct MTouch *mt, int fd)
 	if (ret <= 0)
 		return ret;
 	extract_mtstate(&mt->state, &mt->hs, &mt->caps);
-#if 0
+//#if 0
 	output_mtstate(&mt->state);
-#endif
+//#endif
 	refresh_memory(&mt->mem, &mt->prev_state, &mt->state, &mt->caps);
 #if 0
 	output_memory(&mt->mem);
