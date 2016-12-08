@@ -6,3 +6,4 @@ touchpads, in particular those with integrated button.
 ---
 Copyright (C) 2008 Henrik Rydberg <rydberg@euromail.se>
 
+Based on http://bitmath.org/git/multitouch.git with patches from git://git.panaceas.org/kobo/glo-hd/xorg-input-kobomultitouch-pq
