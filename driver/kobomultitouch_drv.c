@@ -19,6 +19,14 @@
  *
  **************************************************************************/
 
+/* The zforce driver deactivates the touch screen some time after close() */
+/* and doesn't check for an open that might have occured mean while */
+/* thus leaving the device dead in the water */
+/* define this to open and close the device only once, discarding packets */
+/* when the Xserver doesn't want them */
+
+#define DRIVER_IS_RACY
+
 #include "gestures.h"
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 7
@@ -37,6 +45,14 @@ static const float vswipe_fraction = 0.25;
 static const float hswipe_fraction = 0.25;
 static const float scale_fraction = 0.05;
 static const float rot_fraction = 0.05;
+
+struct Private {
+	struct MTouch *mt;
+	int on;
+	void *input_handler;
+};
+	
+static void read_input(LocalDevicePtr local);
 
 /* button mapping simplified */
 #define PROPMAP(m, x, y) m[x] = XIGetKnownProperty(y)
@@ -86,9 +102,18 @@ static void initButtonLabels(Atom map[DIM_BUTTON])
 }
 #endif
 
+static void read_input_handler(int fd, pointer data)
+{
+	LocalDevicePtr local = (LocalDevicePtr) data;
+	struct Private *priv = local->private;
+
+	read_input(local);
+}
+
 static int device_init(DeviceIntPtr dev, LocalDevicePtr local)
 {
-	struct MTouch *mt = local->private;
+	struct Private *priv = local->private;
+	struct MTouch *mt = priv->mt;
 	unsigned char btmap[DIM_BUTTON + 1] = {
 		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
 	};
@@ -107,7 +132,17 @@ static int device_init(DeviceIntPtr dev, LocalDevicePtr local)
 		xf86Msg(X_ERROR, "kobomultitouch: cannot configure device\n");
 		return !Success;
 	}
+#ifndef DRIVER_IS_RACY
 	xf86CloseSerial(local->fd);
+#else
+	if (open_mtouch(mt, local->fd)) {
+		xf86Msg(X_ERROR, "kobomultitouch: cannot grab device\n");
+		return !Success;
+	}
+
+	priv->on = 0;
+	priv->input_handler = xf86AddInputHandler(local->fd, read_input_handler, local);
+#endif
 
 #if GET_ABI_MAJOR(ABI_XINPUT_VERSION) < 3
 	InitPointerDeviceStruct((DevicePtr)dev,
@@ -164,7 +199,10 @@ static int device_init(DeviceIntPtr dev, LocalDevicePtr local)
 
 static int device_on(LocalDevicePtr local)
 {
-	struct MTouch *mt = local->private;
+	struct Private *priv = local->private;
+	struct MTouch *mt = priv->mt;
+
+#ifndef DRIVER_IS_RACY
 	local->fd = xf86OpenSerial(local->options);
 	if (local->fd < 0) {
 		xf86Msg(X_ERROR, "kobomultitouch: cannot open device\n");
@@ -175,16 +213,26 @@ static int device_on(LocalDevicePtr local)
 		return !Success;
 	}
 	xf86AddEnabledDevice(local);
+#else
+	priv->on = 1;
+#endif
 	return Success;
 }
 
 static int device_off(LocalDevicePtr local)
 {
-	struct MTouch *mt = local->private;
+	struct Private *priv = local->private;
+	struct MTouch *mt = priv->mt;
+
+#ifndef DRIVER_IS_RACY
 	xf86RemoveEnabledDevice(local);
 	if (close_mtouch(mt, local->fd))
 		xf86Msg(X_WARNING, "kobomultitouch: cannot ungrab device\n");
 	xf86CloseSerial(local->fd);
+#else
+	priv->on = 0;
+#endif
+
 	return Success;
 }
 
@@ -281,7 +329,8 @@ static void handle_gestures(LocalDevicePtr local,
 static void read_input(LocalDevicePtr local)
 {
 	struct Gestures gs;
-	struct MTouch *mt = local->private;
+	struct Private *priv = local->private;
+	struct MTouch *mt = priv->mt;
 
 	//while (read_packet(mt, local->fd) > 0) {
 	//	extract_gestures(&gs, mt);
@@ -292,6 +341,7 @@ static void read_input(LocalDevicePtr local)
 	//	handle_gestures(local, &gs, &mt->caps);
 	//}
 	while (read_packet(mt, local->fd) > 0) {
+		if (!priv->on) continue;
 		extract_mouse_gestures(&gs, mt);
 		handle_gestures(local, &gs, &mt->caps);
 	}
@@ -324,12 +374,21 @@ static Bool device_control(DeviceIntPtr dev, int mode)
 static int preinit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 {
 	struct MTouch *mt;
+        struct Private *priv;
 
 	mt = calloc(1, sizeof(*mt));
 	if (!mt)
 		return BadAlloc;
 
-	pInfo->private = mt;
+	priv = calloc(1, sizeof(*priv));
+	if (!priv) {
+		free(mt);
+		return BadAlloc;
+	}
+
+	priv->mt = mt;
+
+	pInfo->private = priv;
 	pInfo->type_name = XI_TOUCHSCREEN;
 	pInfo->device_control = device_control;
 	pInfo->read_input = read_input;
@@ -343,18 +402,26 @@ static int preinit(InputDriverPtr drv, InputInfoPtr pInfo, int flags)
 static InputInfoPtr preinit(InputDriverPtr drv, IDevPtr dev, int flags)
 {
 	struct MTouch *mt;
+        struct Private *priv;
 	InputInfoPtr local = xf86AllocateInput(drv, 0);
+
 	if (!local)
 		goto error;
 	mt = calloc(1, sizeof(struct MTouch));
 	if (!mt)
 		goto error;
+	priv = calloc(1, sizeof(*priv));
+	if (!priv) {
+		free(mt);
+		return BadAlloc;
+	}
+	priv->mt = mt;
 
 	local->name = dev->identifier;
 	local->type_name = XI_TOUCHSCREEN;
 	local->device_control = device_control;
 	local->read_input = read_input;
-	local->private = mt;
+	local->private = priv;
 	local->flags = XI86_POINTER_CAPABLE | XI86_SEND_DRAG_EVENTS;
 	local->conf_idev = dev;
 
@@ -370,7 +437,21 @@ static InputInfoPtr preinit(InputDriverPtr drv, IDevPtr dev, int flags)
 
 static void uninit(InputDriverPtr drv, InputInfoPtr local, int flags)
 {
-	free(local->private);
+	struct Private *priv = local->private;
+
+	xf86Msg(X_WARNING, "%s:%s:%d\n",__FILE__,__FUNCTION__,__LINE__);
+
+#ifdef DRIVER_IS_RACY
+	if (priv->input_handler) xf86RemoveInputHandler(priv->input_handler);
+
+	if (close_mtouch(priv->mt, local->fd))
+		xf86Msg(X_WARNING, "kobomultitouch: cannot ungrab device\n");
+
+	xf86CloseSerial(local->fd);
+#endif
+
+	if (priv) free(priv->mt);
+	free(priv);
 	local->private = 0;
 	xf86DeleteInput(local, 0);
 }
