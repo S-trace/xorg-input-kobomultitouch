@@ -1,5 +1,5 @@
 debian/files
-debian/xf86-input-multitouch*
+debian/xf86-input-kobomultitouch*
 bin
 obj
 patches

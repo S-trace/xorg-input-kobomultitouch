@@ -1,7 +1,9 @@
-xf86-input-multitouch
+xf86-input-kobomultitouch
 
-The Multitouch X Driver provides gestures support for multitouch
-touchpads, in particular those with integrated button.
+Kobo Multitouch X input driver
+
+This X input driver provides support for Kobo E-readers multitouch display. 
+Developed by Marek Gibek (https://github.com/marek-g)
 
 ---
 Copyright (C) 2008 Henrik Rydberg <rydberg@euromail.se>

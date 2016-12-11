@@ -1,17 +1,26 @@
-Source: xf86-input-multitouch
-Section: misc
+Source: xf86-input-kobomultitouch
+Section: x11
 Priority: optional
-Maintainer: Henrik Rydberg <rydberg@euromail.se>
+Maintainer: Marek Gibek <https://github.com/marek-g>
 Build-Depends:
-	debhelper (>= 5),
-	xserver-xorg-dev (>= 2:1.7.6.901),
-	libmtdev-dev (>= 1.0.10)
-Standards-Version: 3.7.2
-Homepage: http://bitmath.org/code/multitouch/
+	debhelper (>= 8),
+	pkg-config,
+	quilt (>= 0.46-7~),
+	xserver-xorg-dev (>= 2:1.9.4),
+	libmtdev-dev (>= 1.0.11)
+Standards-Version: 3.9.2
+Homepage: https://sites.google.com/site/gibekm/hardware/kobo/kobo-as-tablet
+Vcs-Git: git@github.com:S-trace/xorg-input-kobomultitouch.git
+Vcs-Browser: https://github.com/S-trace/xorg-input-kobomultitouch
 
-Package: xf86-input-multitouch
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, libmtdev1 (>= 1.0)
-Description: Multitouch X input driver
- This X input driver provides gestures support for multitouch touchpads,
- in particular those with integrated button.
+Package: xserver-xorg-input-kobomultitouch
+Architecture: linux-any
+Depends: ${shlibs:Depends},
+		${misc:Depends},
+		${xinpdriver:Depends},
+		libmtdev1 (>= 1.0.10)
+Provides: ${xinpdriver:Provides}
+Description: Kobo Multitouch X input driver
+ This X input driver provides support for Kobo E-readers
+ multitouch display. 
+ Developed by Marek Gibek (https://github.com/marek-g)

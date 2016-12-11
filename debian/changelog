@@ -1,12 +1,44 @@
-xf86-input-multitouch (1.0~rc3-mactel1) unstable; urgency=low
+xf86-input-kobomultitouch (1.0~rc2+git20110312-2) unstable; urgency=low
 
-  * Contributed bugfixes
+  * Remove debian/README.Debian.
+    This is unnecessary, because X server reads a setup from
+    /usr/share/X11/xorg.conf.d/50-multitouch.conf. (Closes: #646830)
+    Thanks to Olivier Aubert <olivier.aubert@liris.cnrs.fr>.
+  * Update Standards-Version to 3.9.2.
+  * Update copyright format to DEP5.
 
- -- Henrik Rydberg <rydberg@euromail.se>  Sat, 24 Mar 2012 08:40:16 +0100
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Fri, 28 Oct 2011 20:22:55 +0900
 
-xf86-input-multitouch (1.0~rc2-mactel1) unstable; urgency=low
+xf86-input-kobomultitouch (1.0~rc2+git20110312-1) unstable; urgency=low
 
-  * Introducing the multitouch Xorg input driver
+  * Update upstream to git20110312 (Closes: #625608).
+  * Update patch.
+    - Update patches/02_optimize_O2.patch
 
- -- Henrik Rydberg <rydberg@euromail.se>  Thu, 21 Oct 2010 19:30:17 +0200
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Sat, 07 May 2011 21:45:56 +0900
+
+xf86-input-kobomultitouch (1.0~rc2-3) unstable; urgency=low
+
+  * Update debian/control.
+    - Fix xserver-xorg-core dependency and ABI handling (Closes: #614426).
+      Thanks to Julien Cristau.
+    - Change support architecture from any to linux-any.
+    - Add Vcs-Git and Vcs-Browser field.
+  * Change optimize from O3 to O2.
+    Add patches/02_optimize_O2.patch.
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Tue, 08 Mar 2011 12:12:12 +0900
+
+xf86-input-kobomultitouch (1.0~rc2-2) unstable; urgency=low
+
+  * Fix did not include multitouch driver.
+    - Add debian/install file.
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Mon, 06 Dec 2010 20:08:17 +0900
+
+xf86-input-kobomultitouch (1.0~rc2-1) unstable; urgency=low
+
+  * Initial release (Closes: #603534).
+
+ -- Nobuhiro Iwamatsu <iwamatsu@debian.org>  Fri, 12 Nov 2010 05:31:37 +0900
 
